@@ -1,0 +1,78 @@
+#!/usr/bin/env bash
+# audit — launch mpv with the scene-audit overlay script.
+# Read-only: never modifies any input file. Disables mpv's watch-later
+# state so launching the tool has zero on-disk side effects.
+#
+# Usage:
+#   audit MASTER --scenes CSV [--mkv-dir DIR] [--mp4-dir DIR]
+
+set -euo pipefail
+
+SCRIPT_DIR="$(cd "$(dirname "$(readlink -f "$0")")" && pwd)"
+LUA="$SCRIPT_DIR/audit.lua"
+
+usage() {
+  cat <<EOF
+Usage: audit MASTER --scenes CSV [--mkv-dir DIR] [--mp4-dir DIR]
+
+  MASTER         video file to play (DV/MP4/anything mpv handles)
+  --scenes CSV   PySceneDetect *-Scenes.csv
+  --mkv-dir DIR  optional: bit-exact .mkv scene slices (for compare mode)
+  --mp4-dir DIR  optional: transcoded .mp4 scene slices (for compare mode)
+
+Keys (inside mpv):
+  Space          play/pause
+  [  ]           seek -/+ 1 s
+  ,  .           frame back / forward
+  PgUp / PgDn    previous / next cut
+  click timeline seek
+  c              enter compare mode on current scene
+  Esc            exit compare mode
+  h              hide / show overlay
+  q              quit
+EOF
+}
+
+MASTER=""
+SCENES=""
+MKV_DIR=""
+MP4_DIR=""
+
+while [ $# -gt 0 ]; do
+  # Strip stray leading whitespace from the arg. When a user pastes a
+  # multi-line command with `\` continuations onto a single line, fish
+  # turns each `\ ` into an escaped space that gets glued onto the next
+  # token (e.g. ` --mkv-dir`), breaking the case-match below.
+  arg="$1"
+  while [ "${arg#[[:space:]]}" != "$arg" ]; do arg="${arg#[[:space:]]}"; done
+  case "$arg" in
+    --scenes)  SCENES="$2";  shift 2 ;;
+    --mkv-dir) MKV_DIR="$2"; shift 2 ;;
+    --mp4-dir) MP4_DIR="$2"; shift 2 ;;
+    -h|--help) usage; exit 0 ;;
+    --) shift; MASTER="${1:-}"; break ;;
+    -*) echo "audit: unknown option: $arg" >&2; usage >&2; exit 2 ;;
+    *)  MASTER="$arg"; shift ;;
+  esac
+done
+
+[ -n "$MASTER" ] || { echo "audit: missing master video"     >&2; usage >&2; exit 2; }
+[ -n "$SCENES" ] || { echo "audit: missing --scenes CSV"     >&2; usage >&2; exit 2; }
+[ -f "$MASTER" ] || { echo "audit: master not found: $MASTER" >&2; exit 2; }
+[ -f "$SCENES" ] || { echo "audit: scenes CSV not found: $SCENES" >&2; exit 2; }
+[ -f "$LUA"    ] || { echo "audit: audit.lua not found at $LUA"   >&2; exit 2; }
+
+ARGS=(
+  --script="$LUA"
+  --script-opts-append="audit-scenes=$SCENES"
+  --no-osc
+  --osd-bar=no
+  --keep-open=yes
+  --pause
+  --save-position-on-quit=no
+  --write-filename-in-watch-later-config=no
+)
+[ -n "$MKV_DIR" ] && ARGS+=(--script-opts-append="audit-mkv_dir=$MKV_DIR")
+[ -n "$MP4_DIR" ] && ARGS+=(--script-opts-append="audit-mp4_dir=$MP4_DIR")
+
+exec mpv "${ARGS[@]}" "$MASTER"
