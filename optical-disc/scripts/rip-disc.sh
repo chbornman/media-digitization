@@ -105,7 +105,7 @@ NOTES_FILE="$OUT/notes.md"
 
 if [ "$NOTE_SET" = 0 ]; then
   if [ -t 0 ] && [ -t 1 ]; then
-    EDITOR_BIN="${EDITOR:-${VISUAL:-nano}}"
+    EDITOR_BIN="${VISUAL:-${EDITOR:-vim}}"
     log "Look at the disc/case and type your notes. Save & close to start the rip..."
     "$EDITOR_BIN" "$NOTES_FILE" </dev/tty >/dev/tty 2>&1 || warn "editor exited non-zero"
   else
