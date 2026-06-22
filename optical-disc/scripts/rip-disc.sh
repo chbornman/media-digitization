@@ -87,6 +87,32 @@ mkdir -p "$OUT"/{files,videos,mp4,metadata}
 log "Output folder: $OUT"
 log "Disc label: ${LABEL_RAW:-(none)}   fs: ${FSTYPE:-unknown}"
 
+# ---- notes FIRST -----------------------------------------------------------
+# Capture your notes off the CD case up front, before the (slow) rip, so the
+# rip can run unattended. Auto-detected facts (burn date, disc type, video
+# count) get appended after the rip — see the "enrich notes" step below.
+NOTES_FILE="$OUT/notes.md"
+{
+  echo "# Disc notes"
+  echo
+  echo "- Captured: $STAMP"
+  echo "- Disc label (from filesystem): ${LABEL_RAW:-（none）}"
+  echo
+  echo "## Notes from the CD case / label (type below)"
+  echo
+  echo "${NOTE}"
+} > "$NOTES_FILE"
+
+if [ "$NOTE_SET" = 0 ]; then
+  if [ -t 0 ] && [ -t 1 ]; then
+    EDITOR_BIN="${EDITOR:-${VISUAL:-nano}}"
+    log "Look at the disc/case and type your notes. Save & close to start the rip..."
+    "$EDITOR_BIN" "$NOTES_FILE" </dev/tty >/dev/tty 2>&1 || warn "editor exited non-zero"
+  else
+    warn "No TTY for notes. Add them later by editing: $NOTES_FILE  (or use --note)"
+  fi
+fi
+
 # ---- 1. image the disc (the master) ----------------------------------------
 ISO="$OUT/master.iso"
 MAP="$OUT/master.map"
@@ -263,32 +289,19 @@ print(f"  burn-date guess: {burn_date or 'unknown'}")
 print(f"  videos: {len(videos)}")
 PY
 
-# ---- 8. notes ---------------------------------------------------------------
-NOTES_FILE="$OUT/notes.md"
+# ---- 8. enrich notes with auto-detected facts ------------------------------
+# The user already typed their case notes up front (before the rip). Now append
+# the facts we could only learn by reading the disc, without touching what they
+# wrote.
 BURN_DATE="$(python3 -c 'import json,sys;d=json.load(open(sys.argv[1]));print(d.get("burn_date_guess") or "")' "$OUT/disc-info.json" 2>/dev/null || true)"
 {
-  echo "# Disc notes"
   echo
-  echo "- Captured: $STAMP"
-  echo "- Disc label (from filesystem): ${LABEL_RAW:-（none）}"
+  echo "## Auto-detected from the disc"
+  echo
   echo "- Burn-date guess (ISO volume creation): ${BURN_DATE:-unknown}"
   echo "- Disc type: $DISC_TYPE"
   echo "- Videos found: $VID_COUNT"
-  echo
-  echo "## Notes from the CD case / label (type below)"
-  echo
-  echo "${NOTE}"
-} > "$NOTES_FILE"
-
-if [ "$NOTE_SET" = 0 ]; then
-  if [ -t 0 ] && [ -t 1 ]; then
-    EDITOR_BIN="${EDITOR:-${VISUAL:-nano}}"
-    log "Opening $EDITOR_BIN for you to type the CD-case notes (save & close when done)..."
-    "$EDITOR_BIN" "$NOTES_FILE" </dev/tty >/dev/tty 2>&1 || warn "editor exited non-zero"
-  else
-    warn "No TTY for notes. Add them later by editing: $NOTES_FILE  (or use --note)"
-  fi
-fi
+} >> "$NOTES_FILE"
 
 # ---- 9. transcode to MP4 (separate step by default) -------------------------
 if [ "$DO_TRANSCODE" = 1 ]; then

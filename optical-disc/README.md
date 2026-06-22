@@ -17,6 +17,8 @@ videos are already separate files — so the pipeline is simpler:
       │
       ▼
   rip-disc.sh ──┐
+      │         ├─ 0. PROMPT YOU FOR CASE NOTES        → notes.md   (before the rip)
+      │         │      (editor opens; type, save & close to start ripping)
       │         ├─ 1. image the whole disc            → master.iso  (+ .map)
       │         ├─ 2. read ISO9660/Joliet volume meta → metadata/iso-volume.json
       │         ├─ 3. detect type (DVD-Video / VCD / SVCD / data)
@@ -24,11 +26,15 @@ videos are already separate files — so the pipeline is simpler:
       │         ├─ 5. separate each video              → videos/
       │         ├─ 6. probe each video (ffprobe+exif)  → metadata/videos/
       │         ├─ 7. consolidate                      → disc-info.json
-      │         ├─ 8. prompt you for case notes        → notes.md
-      │         └─ 9. transcode each video to H.264    → mp4/
+      │         └─ 8. append auto-detected facts        → notes.md
       ▼
   eject  →  "pop in the next disc"
 ```
+
+> Notes come **first**, on purpose: the editor opens before the slow rip, so you
+> can read the disc/case and type the right details, then save & close and walk
+> away while it rips unattended. Auto-detected facts (burn date, disc type,
+> video count) are appended to your notes afterward.
 
 ## Two steps, on purpose
 
@@ -44,8 +50,9 @@ cd optical-disc
 ./scripts/rip-disc.sh
 ```
 
-Insert a disc, run that, type the notes off the CD case when the editor pops
-up, and walk away. It ejects when finished. Repeat for the next disc.
+Insert a disc and run that. The editor opens **first** — type the notes off the
+CD case, then save & close to kick off the rip and walk away. It ejects when
+finished. Repeat for the next disc.
 
 **Step 2 — transcode (later, on the fast/GPU box).** Point it at the same
 storage and batch-convert every ripped disc to MP4. See
