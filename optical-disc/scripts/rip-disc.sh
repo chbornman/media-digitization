@@ -16,10 +16,14 @@
 # Auto-detects DVD-Video / Video-CD(SVCD) / plain data discs. Ejects at the
 # end so you can immediately drop in the next one.
 #
+# Transcoding to MP4 is a SEPARATE step by default — ripping should be fast so
+# you can churn through a stack of discs. Transcode them all later, ideally on
+# a machine with an NVENC GPU:  ./transcode-all.sh
+#
 # Usage:
 #   ./rip-disc.sh                       interactive: opens $EDITOR for notes
 #   ./rip-disc.sh --note "disc 1 of 30 — text off the case"   notes from CLI
-#   ./rip-disc.sh --no-transcode        skip the MP4 step (do it later)
+#   ./rip-disc.sh --transcode           also make MP4s now (off by default)
 #   ./rip-disc.sh --no-eject            leave the disc in
 #   ./rip-disc.sh --dev /dev/sr1        use a different drive
 #
@@ -36,16 +40,17 @@ ROOT="${CD_DIG_ROOT:-$PWD}"
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 NOTE=""
 NOTE_SET=0
-DO_TRANSCODE=1
+DO_TRANSCODE=0
 DO_EJECT=1
 
 while [ $# -gt 0 ]; do
   case "$1" in
     --note) NOTE="${2:-}"; NOTE_SET=1; shift 2;;
-    --no-transcode) DO_TRANSCODE=0; shift;;
+    --transcode) DO_TRANSCODE=1; shift;;
+    --no-transcode) DO_TRANSCODE=0; shift;;   # accepted (now the default)
     --no-eject) DO_EJECT=0; shift;;
     --dev) DEV="$2"; shift 2;;
-    -h|--help) sed -n '2,30p' "$0"; exit 0;;
+    -h|--help) sed -n '2,31p' "$0"; exit 0;;
     *) echo "unknown arg: $1" >&2; exit 2;;
   esac
 done
@@ -285,12 +290,12 @@ if [ "$NOTE_SET" = 0 ]; then
   fi
 fi
 
-# ---- 9. transcode to MP4 ----------------------------------------------------
+# ---- 9. transcode to MP4 (separate step by default) -------------------------
 if [ "$DO_TRANSCODE" = 1 ]; then
   log "Transcoding videos -> mp4/ (H.264, for easy viewing)"
   "$SCRIPT_DIR/transcode-disc.sh" "$OUT" || warn "transcode step had failures (re-run transcode-disc.sh $OUT)"
 else
-  log "Skipping transcode (--no-transcode). Run later:  scripts/transcode-disc.sh \"$OUT\""
+  log "Transcode deferred. Do it later (ideally on a GPU box):  ./transcode-all.sh"
 fi
 
 # ---- 10. done ---------------------------------------------------------------

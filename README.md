@@ -34,7 +34,7 @@ actually recommend to anyone digitizing old media:
 
 | Folder | Source media | What it does |
 |---|---|---|
-| [`optical-disc/`](optical-disc) | CDs / DVDs (Video-CD, SVCD, DVD-Video, plain data discs) | One command: bit-exact ISO master + every original file + each video separated + full disc & per-file metadata + an H.264 MP4 of each. Auto-detects the disc type. |
+| [`optical-disc/`](optical-disc) | CDs / DVDs (Video-CD, SVCD, DVD-Video, plain data discs) | Rip (one command): bit-exact ISO master + every original file + each video separated + full disc & per-file metadata. Auto-detects the disc type. Transcode to H.264 MP4 is a separate batch step (CPU or NVENC) you run later on the fastest box. |
 | [`dv-tape/`](dv-tape) | MiniDV / DV camcorder tapes | Capture a raw DV master, scene-split it back into the individual clips, transcode each to H.264. |
 | [`scene-audit/`](scene-audit) | *(a tool, not a media type)* | An mpv overlay to visually check the scene-split cuts against the master. Used by `dv-tape`; works on any video. |
 
