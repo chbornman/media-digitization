@@ -5,8 +5,8 @@ home-video discs. Sister workflow to [`../dv-tape`](../dv-tape), same
 philosophy: **keep a pristine master, derive usable files, capture all the
 metadata, verify.**
 
-Code lives here in the repo; output data lands on the NAS under
-`/HomeNAS/Videos/cd-digitization/discs/` (override with `CD_DIG_ROOT`).
+Output lands in a `discs/` folder under the current directory by default; set
+`CD_DIG_ROOT` to send archives somewhere with more room (a NAS, external drive).
 
 The tape project captured DV over FireWire, scene-split, and NVENC-transcoded.
 Optical discs are different — the disc *is* already a digital master and the
@@ -33,15 +33,15 @@ videos are already separate files — so the pipeline is simpler:
 ## The one command
 
 ```
-cd ~/projects/media-digitization/optical-disc
+cd optical-disc
 ./scripts/rip-disc.sh
 ```
 
 Insert a disc, run that, type the notes off the CD case when the editor pops
 up, and walk away. It ejects when finished. Repeat for the next disc.
 
-Each run creates a self-contained, timestamped folder under the data root
-(`/HomeNAS/Videos/cd-digitization/discs/`) — no naming required:
+Each run creates a self-contained, timestamped folder under `discs/` (in the
+current directory, or under `$CD_DIG_ROOT`) — no naming required:
 
 ```
 discs/2026-06-22_143005_disc-label/
@@ -116,30 +116,31 @@ you can confirm/adjust against the case label.
 
 `transcode-disc.sh` makes an H.264 MP4 of each separated video into `mp4/`.
 It auto-detects interlacing per file (`idet`) and only deinterlaces (bwdif)
-when needed. CPU `libx264 -crf 18` — bornmanserver's GPU is AMD and this is SD
-content, so CPU is plenty fast. Resume-safe and parallel; re-run to retry
+when needed. CPU `libx264 -crf 18` — this is SD content, so CPU is plenty fast
+and there's no GPU dependency. Resume-safe and parallel; re-run to retry
 failures:
 
 ```
-./scripts/transcode-disc.sh /HomeNAS/Videos/cd-digitization/discs/2026-06-22_143005_disc-label/ 3
+./scripts/transcode-disc.sh discs/2026-06-22_143005_disc-label/ 3
 ```
 
 ## Setup (one time)
 
-The imaging/extraction tools aren't installed yet. Install them (needs your
-password):
+Install the imaging/extraction tools (Debian/Ubuntu shown; use your distro's
+package manager otherwise):
 
 ```
 sudo apt install gddrescue xorriso vcdimager genisoimage
 ```
 
 - `gddrescue` → `ddrescue` (robust imaging — **the important one**)
-- `xorriso`   → mount-free file extraction (runs as you, no root per disc)
+- `xorriso`   → mount-free file extraction (runs as your user, no root per disc)
 - `vcdimager` → cleaner Video-CD extraction (optional; there's an ffmpeg fallback)
 - `genisoimage` → `isoinfo` for an extra human-readable metadata dump (optional)
 
-ffmpeg, ffprobe, exiftool, python3 are already present. You're in the `cdrom`
-group, so reading the drive and imaging need no root.
+`ffmpeg`, `ffprobe`, `exiftool`, and `python3` are also required (most systems
+already have them). Add your user to the `cdrom` group (`sudo usermod -aG cdrom
+$USER`, then re-login) so reading the drive and imaging need no root.
 
 ## Verifying a disc
 

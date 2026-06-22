@@ -19,25 +19,31 @@ individual clips, then transcodes each to H.264.
 
 ## Data location
 
-Code lives here; the (large) data lives on the NAS and is auto-detected:
-`/HomeNAS/Videos/tape-digitization/{masters,scenes,final}` (or
-`~/mnt/bornman/Videos/tape-digitization` over sshfs from margo). Override with
-`TAPE_DIG_ROOT`.
+Code lives here; the (large) tape data lives wherever you point the scripts.
+They expect this layout under a **data root**:
 
-> The `final/` folder is bind-mounted read-only into the Immich container, so
-> don't relocate it without updating `containers/docker-compose.yml`.
+```
+<data-root>/
+├── masters/tapeNN/tapeNN.dv   ← your captured raw DV masters
+├── scenes/tapeNN/*.mkv        ← created by split.sh
+└── final/tapeNN/*.mp4         ← created by transcode.sh
+```
+
+The data root defaults to the current directory, so `cd` into it before running
+(or set `TAPE_DIG_ROOT=/path/to/data`). Keeping the masters on big storage (a
+NAS, an external drive) and running the scripts against them works fine.
 
 ## Steps
 
-**1. Split a captured master into scenes** (run on bornmanserver, or margo via
-sshfs — needs `scenedetect[opencv]` + `av`):
+**1. Split a captured master into scenes** (needs `scenedetect[opencv]` + `av`):
 
 ```
 ./scripts/split.sh 02
 ```
 
-**2. Transcode the scenes to MP4** (run where `h264_nvenc` exists — i.e. margo's
-5080; bwdif on CPU is the per-process bottleneck, NVENC scales in parallel):
+**2. Transcode the scenes to MP4** (needs `ffmpeg` with `h264_nvenc`; no NVENC
+GPU? swap it for `libx264` in the ffmpeg call). bwdif deinterlacing on CPU is
+the per-process bottleneck, so NVENC lets the parallel jobs scale:
 
 ```
 ./scripts/transcode.sh 02        # 4 parallel jobs (default)

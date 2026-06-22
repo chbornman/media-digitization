@@ -1,33 +1,26 @@
 #!/usr/bin/env bash
 # transcode.sh — NVENC-encode all per-scene MKVs of a tape to H.264 MP4,
-# in parallel. Run on margo (5080) via sshfs mount, or anywhere with
-# h264_nvenc available.
+# in parallel. Run anywhere h264_nvenc is available.
 #
 # Usage:  ./scripts/transcode.sh <tape_num> [jobs]
 #         e.g. ./scripts/transcode.sh 02         (default 4 parallel jobs)
 #         e.g. ./scripts/transcode.sh 02 8       (8 parallel jobs)
 #
-# Auto-detects data root: /HomeNAS/Videos/tape-digitization (direct on
-# bornmanserver) or $HOME/mnt/bornman/Videos/tape-digitization (margo via
-# sshfs). Override with TAPE_DIG_ROOT env var.
+# Data layout (under the data root): scenes/tapeNN/*.mkv -> final/tapeNN/*.mp4
+# Data root defaults to the current directory; override with TAPE_DIG_ROOT.
 #
 # bwdif (CPU) is the per-process bottleneck — each ffmpeg saturates ~1 thread.
-# NVENC ASIC on Blackwell handles many simultaneous sessions, so parallel
-# ffmpeg processes scale roughly linearly until CPU threads run out.
+# An NVENC GPU handles many simultaneous sessions, so parallel ffmpeg
+# processes scale roughly linearly until CPU threads run out. (No NVENC?
+# Swap h264_nvenc for libx264 in the ffmpeg call below.)
 
 set -euo pipefail
 
 TAPE="${1:?Usage: $0 <tape_num like 02> [jobs]}"
 JOBS="${2:-4}"
 
-if [ -z "${TAPE_DIG_ROOT:-}" ]; then
-  for c in \
-      "/HomeNAS/Videos/tape-digitization" \
-      "$HOME/mnt/bornman/Videos/tape-digitization"; do
-    if [ -d "$c" ]; then TAPE_DIG_ROOT="$c"; break; fi
-  done
-fi
-[ -z "${TAPE_DIG_ROOT:-}" ] && { echo "ERROR: data root not found; set TAPE_DIG_ROOT or mount sshfs" >&2; exit 1; }
+TAPE_DIG_ROOT="${TAPE_DIG_ROOT:-$PWD}"
+[ -d "$TAPE_DIG_ROOT/scenes" ] || { echo "ERROR: no 'scenes/' under $TAPE_DIG_ROOT — cd to your data root or set TAPE_DIG_ROOT" >&2; exit 1; }
 
 SCENE_DIR="$TAPE_DIG_ROOT/scenes/tape$TAPE"
 FINAL_DIR="$TAPE_DIG_ROOT/final/tape$TAPE"

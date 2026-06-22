@@ -40,22 +40,29 @@ actually recommend to anyone digitizing old media:
 
 Each folder has its own README with the specifics.
 
-## If you want to adapt any of this
+## Using it
 
-- **Expect to edit paths and hostnames.** The scripts auto-detect a couple of
-  *my* data roots (e.g. `/HomeNAS/Videos/...`) and assume *my* machines. Search
-  for those and point them at yours. The data-root is also overridable by env
-  var in each script (`CD_DIG_ROOT`, `TAPE_DIG_ROOT`).
+The scripts default to working in the **current directory** and put output
+there, so the basic flow is just "cd somewhere with room, run the script":
+
+- **Output location** is overridable per workflow with an env var
+  (`CD_DIG_ROOT` for optical-disc, `TAPE_DIG_ROOT` for dv-tape) if you'd rather
+  archive to a NAS or external drive than the current folder.
 - **Check the tools.** Each README lists what it needs (`ddrescue`, `xorriso`,
   `ffmpeg`, `scenedetect`, `mpv`, …). Nothing exotic; all from your distro's
   package manager.
 - **The optical-disc one is the most reusable** — it's a single script you can
   point at any disc, and it figures out the rest. That's the one I'd start from.
 
+These were written and tested on Linux (the optical-disc workflow assumes a
+Linux optical drive at `/dev/sr0`, overridable with `--dev`). The choices
+inside reflect the situation I built them for, so read them as a worked example
+rather than gospel and adjust to taste.
+
 ## This repo is code only
 
 The actual media — the masters, the ripped files, the MP4s — is **not** in here
-(it's many hundreds of GB and lives on my NAS). `.gitignore` defensively
-excludes media files so nothing bulky or personal ever gets committed by
-accident. There is no family footage, no personal files, and no credentials in
-this repository — only scripts and documentation.
+(it's many hundreds of GB and lives on separate storage). `.gitignore`
+defensively excludes media files so nothing bulky or personal ever gets
+committed by accident. There is no footage, no personal files, and no
+credentials in this repository — only scripts and documentation.

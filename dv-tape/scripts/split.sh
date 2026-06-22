@@ -1,26 +1,20 @@
 #!/usr/bin/env bash
 # split.sh — detect scenes in a tape master and split into per-scene MKV files.
-# Run on bornmanserver (direct), or on margo via sshfs mount — auto-detects path.
-# margo is ~2× faster (9950X vs 4790K). Both need scenedetect + av installed:
+# Needs scenedetect + av installed:
 #   pip install --user --break-system-packages 'scenedetect[opencv]' av
 #
 # Usage:  ./scripts/split.sh <tape_num>
 #         e.g. ./scripts/split.sh 02
 #
-# Override the data root with env var TAPE_DIG_ROOT if needed.
+# Data layout (under the data root): masters/tapeNN/*.dv  ->  scenes/tapeNN/
+# Data root defaults to the current directory; override with TAPE_DIG_ROOT.
 
 set -euo pipefail
 
 TAPE="${1:?Usage: $0 <tape_num like 02>}"
 
-if [ -z "${TAPE_DIG_ROOT:-}" ]; then
-  for c in \
-      "/HomeNAS/Videos/tape-digitization" \
-      "$HOME/mnt/bornman/Videos/tape-digitization"; do
-    if [ -d "$c" ]; then TAPE_DIG_ROOT="$c"; break; fi
-  done
-fi
-[ -z "${TAPE_DIG_ROOT:-}" ] && { echo "ERROR: data root not found; set TAPE_DIG_ROOT or mount sshfs" >&2; exit 1; }
+TAPE_DIG_ROOT="${TAPE_DIG_ROOT:-$PWD}"
+[ -d "$TAPE_DIG_ROOT/masters" ] || { echo "ERROR: no 'masters/' under $TAPE_DIG_ROOT — cd to your data root or set TAPE_DIG_ROOT" >&2; exit 1; }
 
 MASTER_DIR="$TAPE_DIG_ROOT/masters/tape$TAPE"
 SCENE_DIR="$TAPE_DIG_ROOT/scenes/tape$TAPE"

@@ -23,13 +23,16 @@
 #   ./rip-disc.sh --no-eject            leave the disc in
 #   ./rip-disc.sh --dev /dev/sr1        use a different drive
 #
-# Env overrides:  DISC_DEV=/dev/sr0   CD_DIG_ROOT=/HomeNAS/Videos/cd-digitization
+# Env overrides:  DISC_DEV   (optical drive, default /dev/sr0)
+#                 CD_DIG_ROOT (where archives go, default: current directory)
 
 set -euo pipefail
 
 # ---- config / flags ---------------------------------------------------------
 DEV="${DISC_DEV:-/dev/sr0}"
-ROOT="${CD_DIG_ROOT:-/HomeNAS/Videos/cd-digitization}"
+# Output goes under $ROOT/discs/<timestamp>_<label>/. Defaults to the current
+# directory; set CD_DIG_ROOT to send archives somewhere else (e.g. a NAS).
+ROOT="${CD_DIG_ROOT:-$PWD}"
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 NOTE=""
 NOTE_SET=0

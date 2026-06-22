@@ -1,6 +1,6 @@
-# This repo is CODE ONLY. Bulky media data lives on the NAS under
-# /HomeNAS/Videos/... and must never be committed. These rules are a
-# defensive backstop in case data ever lands inside the working tree.
+# This repo is CODE ONLY. Bulky media data (masters, rips, MP4s) must never be
+# committed. These rules are a defensive backstop in case data ever lands
+# inside the working tree.
 
 # Per-workflow data dirs (if ever created/symlinked inside the repo)
 **/masters/

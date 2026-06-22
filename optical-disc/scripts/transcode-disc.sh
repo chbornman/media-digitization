@@ -7,11 +7,11 @@
 # camcorder SD is usually interlaced; VCD MPEG-1 is usually progressive).
 #
 # Usage:  ./transcode-disc.sh <disc_folder> [jobs]
-#         e.g. ./transcode-disc.sh /HomeNAS/Videos/cd-digitization/discs/2026-..._disc 3
+#         e.g. ./transcode-disc.sh discs/2026-06-22_143005_disc-label 3
 #
-# CPU x264 is used (bornmanserver's GPU is AMD; SD content transcodes fast on
-# CPU). To offload to margo's NVENC later, the per-file ffmpeg call is the
-# only thing you'd swap.
+# Uses CPU x264 — SD home-video content transcodes fast on CPU, and it has no
+# GPU dependency, so it runs anywhere. If you have an NVENC GPU and want to
+# offload, the per-file ffmpeg call below is the only thing you'd swap.
 
 set -euo pipefail
 
