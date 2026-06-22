@@ -1,8 +1,9 @@
 # optical-disc
 
-One-command archival of CDs/DVDs — built for the ~30 family-video CDs (wife's
-side). Sister workflow to [`../dv-tape`](../dv-tape), same philosophy: **keep a
-pristine master, derive usable files, capture all the metadata, verify.**
+One-command archival of CDs/DVDs — built to digitize a stack of old family
+home-video discs. Sister workflow to [`../dv-tape`](../dv-tape), same
+philosophy: **keep a pristine master, derive usable files, capture all the
+metadata, verify.**
 
 Code lives here in the repo; output data lands on the NAS under
 `/HomeNAS/Videos/cd-digitization/discs/` (override with `CD_DIG_ROOT`).
@@ -43,7 +44,7 @@ Each run creates a self-contained, timestamped folder under the data root
 (`/HomeNAS/Videos/cd-digitization/discs/`) — no naming required:
 
 ```
-discs/2026-06-22_143005_summer-1998/
+discs/2026-06-22_143005_disc-label/
 ├── master.iso            ← bit-exact preserved master (the whole disc)
 ├── master.map            ← ddrescue map: which sectors read cleanly
 ├── files/                ← every original file, names + dates preserved
@@ -57,7 +58,7 @@ discs/2026-06-22_143005_summer-1998/
 ### Options
 
 ```
-./scripts/rip-disc.sh --note "Box 1: 1998 birthday + beach trip"   # notes from CLI
+./scripts/rip-disc.sh --note "disc 1 of 30 — text copied off the case"   # notes from CLI
 ./scripts/rip-disc.sh --no-transcode      # skip MP4 step (run it later)
 ./scripts/rip-disc.sh --no-eject          # leave the disc in
 ./scripts/rip-disc.sh --dev /dev/sr1      # different drive
@@ -120,7 +121,7 @@ content, so CPU is plenty fast. Resume-safe and parallel; re-run to retry
 failures:
 
 ```
-./scripts/transcode-disc.sh /HomeNAS/Videos/cd-digitization/discs/2026-06-22_143005_summer-1998/ 3
+./scripts/transcode-disc.sh /HomeNAS/Videos/cd-digitization/discs/2026-06-22_143005_disc-label/ 3
 ```
 
 ## Setup (one time)

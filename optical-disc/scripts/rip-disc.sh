@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# rip-disc.sh — one-command optical-disc archiver for the wife's-family CDs.
+# rip-disc.sh — one-command optical-disc archiver for old family home-video CDs.
 #
 # Pop in a CD/DVD, run this, walk away. You get a timestamped folder holding:
 #   * master.iso        — bit-exact image of the disc (the preserved master)
@@ -18,7 +18,7 @@
 #
 # Usage:
 #   ./rip-disc.sh                       interactive: opens $EDITOR for notes
-#   ./rip-disc.sh --note "Box 1, 1998 birthday + beach"   notes from CLI
+#   ./rip-disc.sh --note "disc 1 of 30 — text off the case"   notes from CLI
 #   ./rip-disc.sh --no-transcode        skip the MP4 step (do it later)
 #   ./rip-disc.sh --no-eject            leave the disc in
 #   ./rip-disc.sh --dev /dev/sr1        use a different drive
