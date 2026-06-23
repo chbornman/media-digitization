@@ -31,11 +31,15 @@ mkdir -p "$DST"
 # ---- pick the encoder -------------------------------------------------------
 ENC="${ENCODER:-auto}"
 if [ "$ENC" = "auto" ]; then
-  if ffmpeg -hide_banner -encoders 2>/dev/null | grep -q 'h264_nvenc'; then
-    ENC="nvenc"
-  else
-    ENC="cpu"
-  fi
+  # NOTE: capture to a var and match with `case` — do NOT pipe into `grep -q`.
+  # `grep -q` exits on first match and closes the pipe, ffmpeg then dies of
+  # SIGPIPE, and under `set -o pipefail` that makes the check falsely report
+  # "no nvenc" → silent CPU fallback even when NVENC is present.
+  enc_list="$(ffmpeg -hide_banner -encoders 2>/dev/null || true)"
+  case "$enc_list" in
+    *h264_nvenc*) ENC="nvenc" ;;
+    *)            ENC="cpu" ;;
+  esac
 fi
 export ENC
 
@@ -49,8 +53,9 @@ encode_one() {
   local f="$1"
   local base; base="$(basename "${f%.*}")"
   local out="$DST/${base}.mp4"
-  [ -s "$out" ] && return 0          # resume-safe
-  rm -f "$out"
+  local tmp="$DST/.${base}.partial.mp4"
+  [ -s "$out" ] && return 0          # resume-safe: only a finished file counts
+  rm -f "$out" "$tmp"                # clear any stale partial from an interrupted run
   local errlog="$DST/.${base}.err"
 
   # Detect interlacing: sample ~200 frames with idet, deinterlace only if so.
@@ -76,14 +81,16 @@ encode_one() {
 
   local rc=0
   # shellcheck disable=SC2086
+  # Encode to a temp file, then atomically rename on success — so an
+  # interrupted run never leaves a partial file that looks "done" on resume.
   ffmpeg -nostdin -y -i "$f" \
         -vf "$vf" $venc -pix_fmt yuv420p \
         -c:a aac -b:a 192k -movflags +faststart \
-        "$out" 2>"$errlog" || rc=$?
-  if [ $rc -eq 0 ] && [ -s "$out" ]; then
-    rm -f "$errlog"; echo "done: $(basename "$out")"
+        "$tmp" 2>"$errlog" || rc=$?
+  if [ $rc -eq 0 ] && [ -s "$tmp" ]; then
+    mv -f "$tmp" "$out"; rm -f "$errlog"; echo "done: $(basename "$out")"
   else
-    rm -f "$out"; echo "FAILED: $(basename "$f") (exit $rc) — see $errlog" >&2; return 1
+    rm -f "$tmp"; echo "FAILED: $(basename "$f") (exit $rc) — see $errlog" >&2; return 1
   fi
 }
 export -f encode_one
