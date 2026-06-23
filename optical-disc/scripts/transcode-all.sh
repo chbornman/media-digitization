@@ -20,20 +20,23 @@
 # how many discs you run in parallel, until you run out of CPU cores.
 #
 # Usage:  ./transcode-all.sh [discs_in_parallel] [jobs_within_each_disc]
-#         e.g. ./transcode-all.sh 12              (12 discs at once — main knob)
-#         e.g. ./transcode-all.sh 16 2            (16 discs, 2 encodes each)
-#         e.g. CD_DIG_ROOT=/mnt/nas/cd-digitization ./transcode-all.sh 12
-#         e.g. ENCODER=nvenc ./transcode-all.sh 12
+#         e.g. ./transcode-all.sh 6 1             (6 discs at once)
+#         e.g. CD_DIG_ROOT=/mnt/nas/cd-digitization ./transcode-all.sh 6 1
+#         e.g. ENCODER=cpu ./transcode-all.sh 16  (CPU: no session cap, go wide)
 #
-# Rule of thumb: set discs_in_parallel near your CPU thread count (the limiter
-# is bwdif, not the GPU). On a 16-core/32-thread box, 12-16 is a good start.
+# !! NVENC SESSION CAP: consumer GeForce GPUs limit CONCURRENT encode sessions
+# (~8 on current drivers). Each running ffmpeg = one session, so keep
+# (discs_in_parallel x jobs_within_each_disc) <= ~6-8 when using NVENC, or you
+# get "Could not open encoder" failures (ffmpeg exit 187). SD encodes are only
+# seconds each, so a handful of sessions already saturates throughput.
+# With ENCODER=cpu there's no such cap — scale up to your CPU thread count.
 #
 # Data root defaults to the current directory; override with CD_DIG_ROOT.
 
 set -euo pipefail
 
-DISC_PAR="${1:-6}"      # how many discs to transcode at once (main throughput knob)
-PER_DISC="${2:-2}"      # parallel encodes within a single disc
+DISC_PAR="${1:-4}"      # how many discs to transcode at once (keep x PER_DISC <= ~8 for NVENC)
+PER_DISC="${2:-1}"      # parallel encodes within a single disc
 ROOT="${CD_DIG_ROOT:-$PWD}"
 DISCS="$ROOT/discs"
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
